@@ -166,3 +166,35 @@ export async function leaveGroup(groupId, userId) {
     await updateDoc(groupRef, { members: updated });
   }
 }
+// ─── Todo ─────────────────────────────────────────────────────────────────────
+
+/** 특정 날짜 투두 불러오기 */
+export async function fetchTodos(userId, date) {
+  const q = query(
+    collection(db, 'todos'),
+    where('userId', '==', userId),
+    where('date', '==', date)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/** 투두 추가 */
+export async function addTodo(userId, date, text) {
+  const docRef = await addDoc(collection(db, 'todos'), {
+    userId, date, text,
+    done: false,
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, userId, date, text, done: false };
+}
+
+/** 투두 완료/미완료 토글 */
+export async function toggleTodo(todoId, done) {
+  await updateDoc(doc(db, 'todos', todoId), { done: !done });
+}
+
+/** 투두 삭제 */
+export async function deleteTodo(todoId) {
+  await deleteDoc(doc(db, 'todos', todoId));
+}

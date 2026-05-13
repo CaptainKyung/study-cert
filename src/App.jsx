@@ -71,7 +71,6 @@ export default function App() {
   }
 
   const today = formatDate();
-  const alreadyCertified = posts.some(p => p.date === today && p.userId === user?.id);
 
   async function handleSubmit({ imageBase64, caption }) {
     await createPost({
@@ -108,7 +107,7 @@ export default function App() {
   if (!user) return <AuthScreen onComplete={handleAuthComplete} />;
 
   if (screen === 'camera') return (
-    <CameraScreen user={user} alreadyCertified={alreadyCertified}
+    <CameraScreen user={user}
       onSubmit={handleSubmit} onBack={() => setScreen('feed')} />
   );
 
