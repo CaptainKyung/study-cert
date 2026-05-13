@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import SetupScreen from './screens/SetupScreen';
 import FeedScreen from './screens/FeedScreen';
 import CameraScreen from './screens/CameraScreen';
-import { createPost, fetchPosts, toggleLikeDB } from './utils/firebase';
+import { createPost, fetchPosts, toggleLikeDB, deletePost, editPost } from './utils/firebase';
 import { formatDate } from './utils/date';
 
 const USER_KEY = 'studycert_user';
@@ -53,6 +53,16 @@ export default function App() {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: updated } : p));
   }
 
+  async function handleDelete(postId, imageUrl) {
+    await deletePost(postId, imageUrl);
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  }
+
+  async function handleEdit(postId, caption) {
+    await editPost(postId, caption);
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, caption } : p));
+  }
+
   if (!user) return <SetupScreen onComplete={handleSetupComplete} />;
   if (screen === 'camera') return (
     <CameraScreen user={user} alreadyCertified={alreadyCertified}
@@ -60,6 +70,7 @@ export default function App() {
   );
   return (
     <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
-      onLike={handleLike} onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+      onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit}
+      onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
   );
 }

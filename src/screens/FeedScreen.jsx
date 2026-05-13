@@ -3,7 +3,7 @@ import PostCard from '../components/PostCard';
 import { formatDate, getLast7Days } from '../utils/date';
 import { colors } from '../utils/theme';
 
-export default function FeedScreen({ user, posts, onRefresh, onLike, onOpenCamera, onLogout }) {
+export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, onEdit, onOpenCamera, onLogout }) {
   const today = formatDate();
   const [selectedDay, setSelectedDay] = useState(today);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,7 +27,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onOpenCamer
       <div style={{ padding:'20px 20px 0', display:'flex',
         alignItems:'center', justifyContent:'space-between' }}>
         <div>
-          <h1 style={{ color:'#fff', fontSize:22, fontWeight:900, margin:0 }}>스터디 인증 📚</h1>
+          <h1 style={{ color:'#fff', fontSize:22, fontWeight:900, margin:0 }}>스터디 인증 🍀</h1>
           <p style={{ color:'#555', fontSize:12, margin:'4px 0 0' }}>
             {new Date().toLocaleDateString('ko-KR', {
               year:'numeric', month:'long', day:'numeric', weekday:'long' })}
@@ -50,7 +50,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onOpenCamer
             <span style={{ fontSize:36 }}>✅</span>
             <div style={{ marginLeft:12 }}>
               <p style={{ color:colors.success, fontWeight:700, margin:0 }}>오늘 인증 완료!</p>
-              <p style={{ color:'#4a8a4a', margin:'2px 0 0', fontSize:12 }}>내일도 함께 공부해요</p>
+              <p style={{ color:'#4a8a4a', margin:'2px 0 0', fontSize:12 }}>내일도 함께 공부해요 💪</p>
             </div>
             <div style={{ flex:1 }} />
           </>
@@ -140,7 +140,8 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onOpenCamer
           </div>
         ) : (
           filteredPosts.map(post => (
-            <PostCard key={post.id} post={post} currentUserId={user.id} onLike={onLike} />
+            <PostCard key={post.id} post={post} currentUserId={user.id}
+              onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
           ))
         )}
       </div>

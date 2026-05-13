@@ -1,15 +1,37 @@
+import { useState } from 'react';
 import { formatRelative, formatTime } from '../utils/date';
 import { colors } from '../utils/theme';
 
-export default function PostCard({ post, currentUserId, onLike }) {
+export default function PostCard({ post, currentUserId, onLike, onDelete, onEdit }) {
   const liked = post.likes?.includes(currentUserId);
   const isOwn = post.userId === currentUserId;
   const ts = post.createdAt?.toMillis?.() ?? post.createdAt ?? Date.now();
+  const [showMenu, setShowMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editCaption, setEditCaption] = useState(post.caption ?? '');
+
+  function handleEdit() {
+    setShowMenu(false);
+    setEditing(true);
+  }
+
+  function handleEditSubmit() {
+    onEdit(post.id, editCaption);
+    setEditing(false);
+  }
+
+  function handleDelete() {
+    if (window.confirm('정말 삭제할까요?')) {
+      onDelete(post.id, post.imageUrl);
+    }
+    setShowMenu(false);
+  }
 
   return (
     <div style={{ background:colors.card, borderRadius:20, overflow:'hidden',
-      border:`1.5px solid ${colors.border}`, marginBottom:16 }}>
+      border:`1.5px solid ${colors.border}`, marginBottom:16, position:'relative' }}>
 
+      {/* 헤더 */}
       <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 16px 10px' }}>
         <div style={{ width:40, height:40, borderRadius:'50%', background:'#252535',
           display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>
@@ -22,20 +44,75 @@ export default function PostCard({ post, currentUserId, onLike }) {
           </p>
         </div>
         {isOwn && (
-          <div style={{ background:'#2a2040', borderRadius:8, padding:'3px 10px' }}>
-            <span style={{ color:'#7c6af7', fontSize:11, fontWeight:700 }}>나의 인증</span>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ background:'#2a2040', borderRadius:8, padding:'3px 10px' }}>
+              <span style={{ color:'#7c6af7', fontSize:11, fontWeight:700 }}>나의 인증</span>
+            </div>
+            {/* 점 세개 메뉴 버튼 */}
+            <button onClick={() => setShowMenu(!showMenu)} style={{
+              background:'none', border:'none', color:'#a0a0c0',
+              fontSize:20, cursor:'pointer', padding:'0 4px', lineHeight:1 }}>
+              ⋯
+            </button>
           </div>
         )}
       </div>
 
+      {/* 드롭다운 메뉴 */}
+      {showMenu && (
+        <div style={{ position:'absolute', top:52, right:16, background:'#252535',
+          borderRadius:12, border:`1.5px solid ${colors.border}`,
+          zIndex:100, overflow:'hidden', boxShadow:'0 8px 24px rgba(0,0,0,.4)' }}>
+          <button onClick={handleEdit} style={{
+            display:'block', width:'100%', padding:'12px 20px',
+            background:'none', border:'none', color:'#fff',
+            fontSize:14, cursor:'pointer', textAlign:'left' }}>
+            ✏️ 편집
+          </button>
+          <div style={{ height:1, background:colors.border }} />
+          <button onClick={handleDelete} style={{
+            display:'block', width:'100%', padding:'12px 20px',
+            background:'none', border:'none', color:'#f87171',
+            fontSize:14, cursor:'pointer', textAlign:'left' }}>
+            🗑️ 삭제
+          </button>
+        </div>
+      )}
+
+      {/* 이미지 */}
       <img src={post.imageUrl ?? post.image} alt=""
         style={{ width:'100%', maxHeight:360, objectFit:'cover', display:'block' }} />
 
+      {/* 캡션 + 좋아요 */}
       <div style={{ padding:'12px 16px 14px' }}>
-        {post.caption && (
-          <p style={{ color:'#ccc', fontSize:14, margin:'0 0 10px', lineHeight:1.5 }}>
-            {post.caption}
-          </p>
+        {editing ? (
+          <div style={{ marginBottom:10 }}>
+            <textarea value={editCaption} onChange={e => setEditCaption(e.target.value)}
+              rows={2} maxLength={200}
+              style={{ width:'100%', background:'#0f0f14', border:`1.5px solid ${colors.accent}`,
+                borderRadius:10, padding:'10px 12px', color:'#fff', fontSize:14,
+                resize:'none', outline:'none', boxSizing:'border-box', lineHeight:1.5 }} />
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <button onClick={() => setEditing(false)} style={{
+                flex:1, padding:'9px', background:'#252535', border:'none',
+                borderRadius:10, color:'#a0a0c0', fontSize:13, cursor:'pointer' }}>
+                취소
+              </button>
+              <button onClick={handleEditSubmit} style={{
+                flex:2, padding:'9px',
+                background:'linear-gradient(135deg,#7c6af7,#a78bfa)',
+                border:'none', borderRadius:10, color:'#fff',
+                fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                저장
+              </button>
+            </div>
+          </div>
+        ) : (
+          post.caption && (
+            <p style={{ color:'#ccc', fontSize:14, margin:'0 0 10px', lineHeight:1.5 }}>
+              {post.caption}
+            </p>
+          )
         )}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <button onClick={() => onLike(post.id, post.likes ?? [])} style={{

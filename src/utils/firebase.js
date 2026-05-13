@@ -48,3 +48,21 @@ export async function toggleLikeDB(postId, userId, currentLikes) {
   await updateDoc(doc(db, 'posts', postId), { likes: updated });
   return updated;
 }
+import { deleteDoc } from 'firebase/firestore';
+import { deleteObject } from 'firebase/storage';
+
+// 게시물 삭제
+export async function deletePost(postId, imageUrl) {
+  await deleteDoc(doc(db, 'posts', postId));
+  if (imageUrl) {
+    try {
+      const imageRef = ref(storage, imageUrl);
+      await deleteObject(imageRef);
+    } catch (_) {}
+  }
+}
+
+// 게시물 편집 (캡션 수정)
+export async function editPost(postId, caption) {
+  await updateDoc(doc(db, 'posts', postId), { caption });
+}
