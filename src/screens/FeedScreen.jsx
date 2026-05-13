@@ -149,7 +149,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
       {/* FAB */}
       {!todayChecked && (
         <button onClick={onOpenCamera} style={{
-          position:'fixed', bottom:28, right:24, width:60, height:60,
+          position:'fixed', bottom:90, right:24, width:60, height:60,
           borderRadius:'50%', background:'linear-gradient(135deg,#7c6af7,#a78bfa)',
           border:'none', cursor:'pointer', fontSize:26,
           boxShadow:'0 8px 24px rgba(124,106,247,.4)', zIndex:50 }}>

@@ -1,25 +1,41 @@
 import { useState, useEffect } from 'react';
-import SetupScreen from './screens/SetupScreen';
+import AuthScreen from './screens/AuthScreen';
 import FeedScreen from './screens/FeedScreen';
 import CameraScreen from './screens/CameraScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import GroupScreen from './screens/GroupScreen';
 import BottomTab from './components/BottomTab';
-import { createPost, fetchPosts, toggleLikeDB, deletePost, editPost } from './utils/firebase';
+import {
+  onAuthChange, fetchUserProfile, logoutUser,
+  createPost, fetchPosts, toggleLikeDB,
+  deletePost, editPost, updateUserProfile
+} from './utils/firebase';
 import { formatDate } from './utils/date';
-
-const USER_KEY = 'studycert_user';
 
 export default function App() {
   const [tab, setTab] = useState('feed');
   const [screen, setScreen] = useState('feed');
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => { loadPosts(); }, []);
+  useEffect(() => {
+    const unsub = onAuthChange(async (firebaseUser) => {
+      if (firebaseUser) {
+        const profile = await fetchUserProfile(firebaseUser.uid);
+        if (profile) {
+          setUser({ id: firebaseUser.uid, ...profile });
+        } else {
+          setUser({ id: firebaseUser.uid, email: firebaseUser.email });
+        }
+        await loadPosts();
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
   async function loadPosts() {
     try {
@@ -28,21 +44,30 @@ export default function App() {
     } catch(e) { console.error(e); }
   }
 
-  function handleSetupComplete(newUser) {
-    setUser(newUser);
-    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+  async function handleAuthComplete(userData) {
+    const profile = await fetchUserProfile(userData.id);
+    if (profile) {
+      setUser({ id: userData.id, ...profile });
+    } else {
+      setUser(userData);
+    }
+    await loadPosts();
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     if (window.confirm('로그아웃 하시겠어요?')) {
-      localStorage.removeItem(USER_KEY);
+      await logoutUser();
       setUser(null);
+      setPosts([]);
     }
   }
 
-  function handleUpdateUser(updatedUser) {
+  async function handleUpdateUser(updatedUser) {
     setUser(updatedUser);
-    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    await updateUserProfile(updatedUser.id, {
+      name: updatedUser.name,
+      avatar: updatedUser.avatar,
+    });
   }
 
   const today = formatDate();
@@ -73,7 +98,14 @@ export default function App() {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, caption } : p));
   }
 
-  if (!user) return <SetupScreen onComplete={handleSetupComplete} />;
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:'#0f0f14', display:'flex',
+      alignItems:'center', justifyContent:'center' }}>
+      <div style={{ fontSize:48 }}>🍀</div>
+    </div>
+  );
+
+  if (!user) return <AuthScreen onComplete={handleAuthComplete} />;
 
   if (screen === 'camera') return (
     <CameraScreen user={user} alreadyCertified={alreadyCertified}

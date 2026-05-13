@@ -5,6 +5,10 @@ import {
   where, deleteDoc
 } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  getAuth, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDwQGVujWTa1-9Okx6-PwJ7A0N-CL-Msmg",
@@ -18,6 +22,60 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const auth = getAuth(app);
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
+
+export async function registerUser({ email, password, name, avatar }) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await addDoc(collection(db, 'users'), {
+    uid: cred.user.uid,
+    email, name, avatar,
+    role: 'user',
+    createdAt: serverTimestamp(),
+  });
+  return cred.user;
+}
+
+export async function loginUser({ email, password }) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  return cred.user;
+}
+
+export async function logoutUser() {
+  await signOut(auth);
+}
+
+export async function fetchUserProfile(uid) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (!userDoc) return null;
+  return { id: userDoc.id, ...userDoc.data() };
+}
+
+export async function fetchAllUsers() {
+  const snapshot = await getDocs(collection(db, 'users'));
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function updateUserProfile(uid, updates) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (!userDoc) return;
+  await updateDoc(doc(db, 'users', userDoc.id), updates);
+}
+
+export async function deleteUser(uid) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (userDoc) await deleteDoc(doc(db, 'users', userDoc.id));
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
 
 export async function uploadImage(base64, postId) {
   const storageRef = ref(storage, `posts/${postId}.jpg`);
@@ -63,6 +121,8 @@ export async function deletePost(postId, imageUrl) {
 export async function editPost(postId, caption) {
   await updateDoc(doc(db, 'posts', postId), { caption });
 }
+
+// ─── Groups ───────────────────────────────────────────────────────────────────
 
 export async function createGroup({ name, userId, userName, userAvatar }) {
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
