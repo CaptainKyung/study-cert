@@ -198,3 +198,37 @@ export async function toggleTodo(todoId, done) {
 export async function deleteTodo(todoId) {
   await deleteDoc(doc(db, 'todos', todoId));
 }
+// ─── Account Management ───────────────────────────────────────────────────────
+import {
+  updateEmail, updatePassword,
+  reauthenticateWithCredential, EmailAuthProvider,
+  deleteUser as firebaseDeleteUser
+} from 'firebase/auth';
+
+/** 비밀번호 변경 */
+export async function changePassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updatePassword(user, newPassword);
+}
+
+/** 이메일 변경 */
+export async function changeEmail(currentPassword, newEmail) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updateEmail(user, newEmail);
+  await updateUserProfile(user.uid, { email: newEmail });
+}
+
+/** 계정 삭제 */
+export async function deleteAccount(password) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, password);
+  await reauthenticateWithCredential(user, credential);
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === user.uid);
+  if (userDoc) await deleteDoc(doc(db, 'users', userDoc.id));
+  await firebaseDeleteUser(user);
+}
