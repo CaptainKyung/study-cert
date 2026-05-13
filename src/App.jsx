@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import SetupScreen from './screens/SetupScreen';
 import FeedScreen from './screens/FeedScreen';
 import CameraScreen from './screens/CameraScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import GroupScreen from './screens/GroupScreen';
+import BottomTab from './components/BottomTab';
 import { createPost, fetchPosts, toggleLikeDB, deletePost, editPost } from './utils/firebase';
 import { formatDate } from './utils/date';
 
 const USER_KEY = 'studycert_user';
 
 export default function App() {
+  const [tab, setTab] = useState('feed');
   const [screen, setScreen] = useState('feed');
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem(USER_KEY);
@@ -36,6 +40,11 @@ export default function App() {
     }
   }
 
+  function handleUpdateUser(updatedUser) {
+    setUser(updatedUser);
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+  }
+
   const today = formatDate();
   const alreadyCertified = posts.some(p => p.date === today && p.userId === user?.id);
 
@@ -46,6 +55,7 @@ export default function App() {
     });
     await loadPosts();
     setScreen('feed');
+    setTab('feed');
   }
 
   async function handleLike(postId, currentLikes) {
@@ -64,13 +74,28 @@ export default function App() {
   }
 
   if (!user) return <SetupScreen onComplete={handleSetupComplete} />;
+
   if (screen === 'camera') return (
     <CameraScreen user={user} alreadyCertified={alreadyCertified}
       onSubmit={handleSubmit} onBack={() => setScreen('feed')} />
   );
+
   return (
-    <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
-      onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit}
-      onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+    <div>
+      {tab === 'feed' && (
+        <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
+          onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit}
+          onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+      )}
+      {tab === 'group' && (
+        <GroupScreen user={user} posts={posts}
+          onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit} />
+      )}
+      {tab === 'profile' && (
+        <ProfileScreen user={user} posts={posts}
+          onUpdateUser={handleUpdateUser} onLogout={handleLogout} />
+      )}
+      <BottomTab screen={tab} onChange={setTab} />
+    </div>
   );
 }
