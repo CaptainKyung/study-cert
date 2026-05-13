@@ -1,116 +1,253 @@
-import { useRef, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore, collection, addDoc, getDocs,
+  updateDoc, doc, query, orderBy, serverTimestamp,
+  where, deleteDoc
+} from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  getAuth, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  updatePassword, updateEmail,
+  reauthenticateWithCredential, EmailAuthProvider,
+  deleteUser as firebaseDeleteUser
+} from 'firebase/auth';
 
-export default function CameraScreen({ user, onSubmit, onBack }) {
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [stream, setStream] = useState(null);
-  const [captured, setCaptured] = useState(null);
-  const [caption, setCaption] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [started, setStarted] = useState(false);
+const firebaseConfig = {
+  apiKey: "AIzaSyDwQGVujWTa1-9Okx6-PwJ7A0N-CL-Msmg",
+  authDomain: "study-cert-a9792.firebaseapp.com",
+  projectId: "study-cert-a9792",
+  storageBucket: "study-cert-a9792.firebasestorage.app",
+  messagingSenderId: "850865972256",
+  appId: "1:850865972256:web:0e929e3f245c922a2ec845"
+};
 
-  async function startCamera() {
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const auth = getAuth(app);
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
+
+export async function registerUser({ email, password, name, avatar }) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await addDoc(collection(db, 'users'), {
+    uid: cred.user.uid,
+    email, name, avatar,
+    role: 'user',
+    createdAt: serverTimestamp(),
+  });
+  return cred.user;
+}
+
+export async function loginUser({ email, password }) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  return cred.user;
+}
+
+export async function logoutUser() {
+  await signOut(auth);
+}
+
+export async function fetchUserProfile(uid) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (!userDoc) return null;
+  return { id: userDoc.id, ...userDoc.data() };
+}
+
+export async function fetchAllUsers() {
+  const snapshot = await getDocs(collection(db, 'users'));
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function updateUserProfile(uid, updates) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (!userDoc) return;
+  await updateDoc(doc(db, 'users', userDoc.id), updates);
+}
+
+export async function deleteUser(uid) {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === uid);
+  if (userDoc) await deleteDoc(doc(db, 'users', userDoc.id));
+}
+
+// ─── Account Management ───────────────────────────────────────────────────────
+
+export async function changePassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updatePassword(user, newPassword);
+}
+
+export async function changeEmail(currentPassword, newEmail) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updateEmail(user, newEmail);
+  await updateUserProfile(user.uid, { email: newEmail });
+}
+
+export async function deleteAccount(password) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, password);
+  await reauthenticateWithCredential(user, credential);
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userDoc = snapshot.docs.find(d => d.data().uid === user.uid);
+  if (userDoc) await deleteDoc(doc(db, 'users', userDoc.id));
+  await firebaseDeleteUser(user);
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+export async function uploadImage(base64, postId) {
+  const storageRef = ref(storage, `posts/${postId}.jpg`);
+  await uploadString(storageRef, base64, 'data_url', {
+    contentType: 'image/jpeg',
+  });
+  return getDownloadURL(storageRef);
+}
+
+export async function createPost({ userId, userName, userAvatar, imageBase64, caption, date }) {
+  const postId = `${userId}_${Date.now()}`;
+  const imageUrl = await uploadImage(imageBase64, postId);
+  const docRef = await addDoc(collection(db, 'posts'), {
+    userId, userName, userAvatar, imageUrl, caption, date,
+    likes: [], createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function fetchPosts() {
+  const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function toggleLikeDB(postId, userId, currentLikes) {
+  const already = currentLikes.includes(userId);
+  const updated = already
+    ? currentLikes.filter(id => id !== userId)
+    : [...currentLikes, userId];
+  await updateDoc(doc(db, 'posts', postId), { likes: updated });
+  return updated;
+}
+
+export async function deletePost(postId, imageUrl) {
+  await deleteDoc(doc(db, 'posts', postId));
+  if (imageUrl) {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 4096 },
-          height: { ideal: 2160 },
-        },
-        audio: false
-      });
-      setStream(s);
-      if (videoRef.current) videoRef.current.srcObject = s;
-      setStarted(true);
-    } catch {
-      alert('카메라 접근 권한이 필요합니다.');
-    }
+      const imageRef = ref(storage, imageUrl);
+      await deleteObject(imageRef);
+    } catch (_) {}
   }
+}
 
-  function stopStream() {
-    stream?.getTracks().forEach(t => t.stop());
-    setStream(null);
+export async function editPost(postId, caption) {
+  await updateDoc(doc(db, 'posts', postId), { caption });
+}
+
+// ─── Groups ───────────────────────────────────────────────────────────────────
+
+export async function createGroup({ name, userId, userName, userAvatar }) {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const docRef = await addDoc(collection(db, 'groups'), {
+    name, code,
+    members: [{ userId, userName, userAvatar }],
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, code };
+}
+
+export async function joinGroup({ code, userId, userName, userAvatar }) {
+  const q = query(collection(db, 'groups'), where('code', '==', code.toUpperCase()));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) throw new Error('존재하지 않는 코드예요');
+  const groupDoc = snapshot.docs[0];
+  const members = groupDoc.data().members;
+  if (members.find(m => m.userId === userId)) throw new Error('이미 참여한 그룹이에요');
+  await updateDoc(doc(db, 'groups', groupDoc.id), {
+    members: [...members, { userId, userName, userAvatar }]
+  });
+  return { id: groupDoc.id, ...groupDoc.data() };
+}
+
+export async function fetchMyGroups(userId) {
+  const snapshot = await getDocs(collection(db, 'groups'));
+  return snapshot.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(g => g.members.some(m => m.userId === userId));
+}
+
+export async function leaveGroup(groupId, userId) {
+  const groupRef = doc(db, 'groups', groupId);
+  const snapshot = await getDocs(collection(db, 'groups'));
+  const group = snapshot.docs.find(d => d.id === groupId)?.data();
+  if (!group) return;
+  const updated = group.members.filter(m => m.userId !== userId);
+  if (updated.length === 0) {
+    await deleteDoc(groupRef);
+  } else {
+    await updateDoc(groupRef, { members: updated });
   }
+}
 
-  function capture() {
-    const v = videoRef.current, c = canvasRef.current;
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    c.getContext('2d').drawImage(v, 0, 0);
-    setCaptured(c.toDataURL('image/jpeg', 1.0));
-    stopStream();
-  }
+// ─── Todo ─────────────────────────────────────────────────────────────────────
 
-  async function handleSubmit() {
-    setLoading(true);
-    try {
-      await onSubmit({ imageBase64: captured, caption });
-    } catch { alert('업로드 실패. 다시 시도해주세요.'); }
-    finally { setLoading(false); }
-  }
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#000', display:'flex',
-      flexDirection:'column', fontFamily:'sans-serif' }}>
-
-      <div style={{ display:'flex', alignItems:'center', padding:'16px 20px',
-        position:'fixed', top:0, left:0, right:0, zIndex:10 }}>
-        <button onClick={() => { stopStream(); onBack(); }} style={{
-          background:'rgba(0,0,0,.6)', border:'none', color:'#fff',
-          borderRadius:'50%', width:40, height:40, fontSize:20, cursor:'pointer' }}>←</button>
-        <span style={{ color:'#fff', fontWeight:700, fontSize:16, marginLeft:12 }}>
-          오늘의 공부 인증
-        </span>
-      </div>
-
-      {!captured ? (
-        <div style={{ flex:1, display:'flex', flexDirection:'column',
-          alignItems:'center', justifyContent:'center', paddingTop:60 }}>
-          <video ref={videoRef} autoPlay playsInline
-            style={{ width:'100%', maxHeight:'70vh', objectFit:'cover',
-              display: started?'block':'none' }} />
-          <canvas ref={canvasRef} style={{ display:'none' }} />
-
-          {!started ? (
-            <button onClick={startCamera} style={{
-              background:'linear-gradient(135deg,#7c6af7,#a78bfa)', border:'none',
-              borderRadius:16, padding:'16px 32px', color:'#fff',
-              fontSize:16, fontWeight:700, cursor:'pointer' }}>
-              📸 카메라 시작
-            </button>
-          ) : (
-            <button onClick={capture} style={{
-              marginTop:24, width:76, height:76, borderRadius:'50%',
-              background:'#fff', border:'4px solid rgba(255,255,255,.4)', cursor:'pointer' }} />
-          )}
-        </div>
-      ) : (
-        <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
-          <img src={captured} style={{ width:'100%', flex:1, objectFit:'cover' }} alt="" />
-          <div style={{ background:'#0f0f14', padding:'20px 24px 40px' }}>
-            <textarea value={caption} onChange={e => setCaption(e.target.value)}
-              placeholder="오늘 공부한 내용을 간단히 적어봐요... (선택)"
-              rows={2} maxLength={200}
-              style={{ width:'100%', background:'#1a1a24', border:'1.5px solid #2a2a3a',
-                borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14,
-                resize:'none', outline:'none', boxSizing:'border-box', lineHeight:1.5 }} />
-            <div style={{ display:'flex', gap:12, marginTop:14 }}>
-              <button onClick={() => { setCaptured(null); setStarted(false); }} style={{
-                flex:1, padding:13, background:'#1a1a24', border:'1.5px solid #2a2a3a',
-                borderRadius:14, color:'#a0a0c0', fontSize:15, fontWeight:600, cursor:'pointer' }}>
-                다시 찍기
-              </button>
-              <button onClick={handleSubmit} disabled={loading} style={{
-                flex:2, padding:13,
-                background:'linear-gradient(135deg,#7c6af7,#a78bfa)',
-                border:'none', borderRadius:14, color:'#fff',
-                fontSize:15, fontWeight:700, cursor:'pointer' }}>
-                {loading ? '올리는 중...' : '인증 완료! 🎉'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+export async function fetchTodos(userId, date) {
+  const q = query(
+    collection(db, 'todos'),
+    where('userId', '==', userId),
+    where('date', '==', date)
   );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function addTodo(userId, date, text) {
+  const docRef = await addDoc(collection(db, 'todos'), {
+    userId, date, text,
+    done: false,
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, userId, date, text, done: false };
+}
+
+export async function toggleTodo(todoId, done) {
+  await updateDoc(doc(db, 'todos', todoId), { done: !done });
+}
+
+export async function deleteTodo(todoId) {
+  await deleteDoc(doc(db, 'todos', todoId));
+}
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+export async function fetchComments(postId) {
+  const q = query(
+    collection(db, 'comments'),
+    where('postId', '==', postId),
+    orderBy('createdAt', 'asc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function addComment(postId, userId, userName, userAvatar, text) {
+  const docRef = await addDoc(collection(db, 'comments'), {
+    postId, userId, userName, userAvatar, text,
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, postId, userId, userName, userAvatar, text };
+}
+
+export async function deleteComment(commentId) {
+  await deleteDoc(doc(db, 'comments', commentId));
 }
