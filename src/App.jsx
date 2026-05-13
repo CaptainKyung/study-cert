@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import SetupScreen from './screens/SetupScreen';
 import FeedScreen from './screens/FeedScreen';
 import CameraScreen from './screens/CameraScreen';
@@ -53,13 +54,24 @@ export default function App() {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: updated } : p));
   }
 
-  if (!user) return <SetupScreen onComplete={handleSetupComplete} />;
+  if (!user) return (
+    <>
+      <SetupScreen onComplete={handleSetupComplete} />
+      <Analytics />
+    </>
+  );
   if (screen === 'camera') return (
-    <CameraScreen user={user} alreadyCertified={alreadyCertified}
-      onSubmit={handleSubmit} onBack={() => setScreen('feed')} />
+    <>
+      <CameraScreen user={user} alreadyCertified={alreadyCertified}
+        onSubmit={handleSubmit} onBack={() => setScreen('feed')} />
+      <Analytics />
+    </>
   );
   return (
-    <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
-      onLike={handleLike} onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+    <>
+      <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
+        onLike={handleLike} onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+      <Analytics />
+    </>
   );
 }
