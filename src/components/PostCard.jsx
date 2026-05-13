@@ -193,13 +193,16 @@ export default function PostCard({ post, currentUserId, currentUser, onLike, onD
                       fontSize:14, flexShrink:0 }}>
                       {comment.userAvatar}
                     </div>
-                    <div style={{ flex:1, background:'#252535', borderRadius:10,
+                   <div style={{ flex:1, background:'#252535', borderRadius:10,
                       padding:'8px 10px' }}>
-                      <p style={{ color:colors.accent, fontSize:12,
-                        fontWeight:700, margin:'0 0 2px' }}>{comment.userName}</p>
-                      <p style={{ color:'#fff', fontSize:13, margin:0, lineHeight:1.4 }}>
-                        {comment.text}
-                      </p>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span style={{ color:colors.accent, fontSize:12, fontWeight:700 }}>
+                          {comment.userName}
+                        </span>
+                        <span style={{ color:'#fff', fontSize:13, lineHeight:1.4 }}>
+                          {comment.text}
+                        </span>
+                      </div>
                     </div>
                     {comment.userId === currentUserId && (
                       <button onClick={() => handleDeleteComment(comment.id)} style={{
