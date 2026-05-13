@@ -63,11 +63,12 @@ export default function App() {
   }
 
   async function handleUpdateUser(updatedUser) {
-    setUser(updatedUser);
     await updateUserProfile(updatedUser.id, {
       name: updatedUser.name,
       avatar: updatedUser.avatar,
     });
+    const profile = await fetchUserProfile(updatedUser.id);
+    if (profile) setUser({ id: updatedUser.id, ...profile });
   }
 
   const today = formatDate();
