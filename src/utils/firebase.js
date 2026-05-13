@@ -1,9 +1,8 @@
-import { initializeApp } from 'firebase/app';
 import {
   getFirestore, collection, addDoc, getDocs,
-  updateDoc, doc, query, orderBy, serverTimestamp
+  updateDoc, doc, query, orderBy, serverTimestamp,
+  where, deleteDoc
 } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDwQGVujWTa1-9Okx6-PwJ7A0N-CL-Msmg",
@@ -48,8 +47,7 @@ export async function toggleLikeDB(postId, userId, currentLikes) {
   await updateDoc(doc(db, 'posts', postId), { likes: updated });
   return updated;
 }
-import { deleteDoc } from 'firebase/firestore';
-import { deleteObject } from 'firebase/storage';
+
 
 // 게시물 삭제
 export async function deletePost(postId, imageUrl) {
@@ -65,4 +63,53 @@ export async function deletePost(postId, imageUrl) {
 // 게시물 편집 (캡션 수정)
 export async function editPost(postId, caption) {
   await updateDoc(doc(db, 'posts', postId), { caption });
+}
+// ─── Groups ───────────────────────────────────────────────────────────────────
+
+/** 그룹 만들기 */
+export async function createGroup({ name, userId, userName, userAvatar }) {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const docRef = await addDoc(collection(db, 'groups'), {
+    name,
+    code,
+    members: [{ userId, userName, userAvatar }],
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, code };
+}
+
+/** 초대 코드로 그룹 참여 */
+export async function joinGroup({ code, userId, userName, userAvatar }) {
+  const q = query(collection(db, 'groups'), where('code', '==', code.toUpperCase()));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) throw new Error('존재하지 않는 코드예요');
+  const groupDoc = snapshot.docs[0];
+  const members = groupDoc.data().members;
+  if (members.find(m => m.userId === userId)) throw new Error('이미 참여한 그룹이에요');
+  await updateDoc(doc(db, 'groups', groupDoc.id), {
+    members: [...members, { userId, userName, userAvatar }]
+  });
+  return { id: groupDoc.id, ...groupDoc.data() };
+}
+
+/** 내 그룹 목록 */
+export async function fetchMyGroups(userId) {
+  const snapshot = await getDocs(collection(db, 'groups'));
+  return snapshot.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(g => g.members.some(m => m.userId === userId));
+}
+
+/** 그룹 탈퇴 */
+export async function leaveGroup(groupId, userId) {
+  const groupRef = doc(db, 'groups', groupId);
+  const groupDoc = await getDocs(query(collection(db, 'groups')));
+  const group = groupDoc.docs.find(d => d.id === groupId)?.data();
+  if (!group) return;
+  const updated = group.members.filter(m => m.userId !== userId);
+  if (updated.length === 0) {
+    await deleteDoc(groupRef);
+  } else {
+    await updateDoc(groupRef, { members: updated });
+  }
 }
