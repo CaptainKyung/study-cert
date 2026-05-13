@@ -144,7 +144,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
           <div style={{ marginBottom:16 }}>
             {selectedPosts.map(post => (
               <PostCard key={post.id} post={post} currentUserId={user.id}
-                onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
+  currentUser={user} onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
             ))}
           </div>
         )}
@@ -163,7 +163,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
             border:`1.5px solid ${colors.border}`, overflow:'hidden', marginBottom:16 }}>
             <div style={{ padding:'14px 16px', borderBottom:`1px solid ${colors.border}` }}>
               <p style={{ color:'#fff', fontWeight:700, fontSize:15, margin:0 }}>
-                ✅ 투두리스트
+                To do list
               </p>
             </div>
 

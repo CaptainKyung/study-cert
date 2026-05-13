@@ -133,8 +133,8 @@ export default function GroupScreen({ user, posts, onLike, onDelete, onEdit }) {
             </div>
           ) : (
             groupPosts.map(post => (
-              <PostCard key={post.id} post={post} currentUserId={user.id}
-                onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
+             <PostCard key={post.id} post={post} currentUserId={user.id}
+  currentUser={user} onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
             ))
           )}
         </div>

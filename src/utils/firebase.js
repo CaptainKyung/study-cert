@@ -232,3 +232,29 @@ export async function deleteAccount(password) {
   if (userDoc) await deleteDoc(doc(db, 'users', userDoc.id));
   await firebaseDeleteUser(user);
 }
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+/** 댓글 불러오기 */
+export async function fetchComments(postId) {
+  const q = query(
+    collection(db, 'comments'),
+    where('postId', '==', postId),
+    orderBy('createdAt', 'asc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/** 댓글 추가 */
+export async function addComment(postId, userId, userName, userAvatar, text) {
+  const docRef = await addDoc(collection(db, 'comments'), {
+    postId, userId, userName, userAvatar, text,
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, postId, userId, userName, userAvatar, text };
+}
+
+/** 댓글 삭제 */
+export async function deleteComment(commentId) {
+  await deleteDoc(doc(db, 'comments', commentId));
+}
