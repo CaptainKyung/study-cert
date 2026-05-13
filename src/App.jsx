@@ -68,7 +68,11 @@ export default function App() {
       avatar: updatedUser.avatar,
     });
     const profile = await fetchUserProfile(updatedUser.id);
-    if (profile) setUser({ id: updatedUser.id, ...profile });
+    if (profile) {
+      setUser({ id: updatedUser.id, ...profile });
+    } else {
+      setUser(updatedUser);
+    }
   }
 
   const today = formatDate();
