@@ -60,9 +60,9 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
   const isFuture = selectedDay > today;
 
   return (
-    <div style={{ minHeight:'100vh', background:colors.bg,
-      fontFamily:'sans-serif', paddingBottom:120 }}>
-
+    <div style={{ minHeight:'100vh', fontFamily:'sans-serif', paddingBottom:120,
+      backgroundImage:'url(/bg.jpg)', backgroundSize:'cover',
+      backgroundPosition:'center', backgroundAttachment:'fixed' }}>
       {/* 헤더 */}
       <div style={{ padding:'20px 20px 0', display:'flex',
         alignItems:'center', justifyContent:'space-between' }}>
@@ -74,8 +74,9 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
       </div>
 
       {/* 캘린더 */}
-      <div style={{ margin:'16px 20px', background:colors.card, borderRadius:20,
-        padding:'16px', border:`1.5px solid ${colors.border}` }}>
+      <div style={{ margin:'16px 20px', background:'rgba(0,0,0,0.3)', borderRadius:20,
+        padding:'16px', border:`1.5px solid rgba(255,255,255,0.2)`,
+        backdropFilter:'blur(10px)' }}>
         <div style={{ display:'flex', alignItems:'center',
           justifyContent:'space-between', marginBottom:12 }}>
           <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} style={{
