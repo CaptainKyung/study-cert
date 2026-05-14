@@ -1,15 +1,19 @@
 export const colors = {
-  bg: '#0f0f14',
-  card: '#1a1a24',
-  border: '#2a2a3a',
-  accent: '#7c6af7',
-  accentLight: '#a78bfa',
-  accentMuted: '#2a2040',
-  textPrimary: '#ffffff',
-  textSecondary: '#a0a0c0',
-  textMuted: '#555566',
-  success: '#7fff7f',
-  successBg: '#1a2a1a',
-  successBorder: '#2d4a2d',
-  danger: '#f87171',
+  bg: '#f0f7e6',
+  card: 'rgba(255,255,255,0.85)',
+  border: 'rgba(180,220,150,0.4)',
+  accent: '#7bc67e',
+  accentLight: '#a8d9a8',
+  accentMuted: 'rgba(123,198,126,0.2)',
+  textPrimary: '#3a5a3a',
+  textSecondary: '#5a8a5a',
+  textMuted: '#8aaa8a',
+  success: '#4caf50',
+  successBg: 'rgba(123,198,126,0.15)',
+  successBorder: 'rgba(123,198,126,0.4)',
+  danger: '#e88080',
+};
+
+export const gradients = {
+  accent: ['#7bc67e', '#a8d9a8'],
 };

@@ -59,29 +59,38 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
   const isPast = selectedDay < today;
   const isFuture = selectedDay > today;
 
+  const glassStyle = {
+    background: 'rgba(255,255,255,0.15)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: '1.5px solid rgba(255,255,255,0.3)',
+  };
+
   return (
     <div style={{ minHeight:'100vh', fontFamily:'sans-serif', paddingBottom:120,
+      paddingTop:'env(safe-area-inset-top)',
       backgroundImage:'url(/bg.jpg)', backgroundSize:'cover',
       backgroundPosition:'center', backgroundAttachment:'fixed' }}>
+
       {/* 헤더 */}
       <div style={{ padding:'20px 20px 0', display:'flex',
         alignItems:'center', justifyContent:'space-between' }}>
-        <h1 style={{ color:'#fff', fontSize:22, fontWeight:900, margin:0 }}>스터디 인증 🍀</h1>
-        <button onClick={onLogout} style={{ background:colors.card, border:'none',
+        <h1 style={{ color:'#fff', fontSize:22, fontWeight:900, margin:0,
+          textShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>스터디 인증 🍀</h1>
+        <button onClick={onLogout} style={{ ...glassStyle, border:'none',
           borderRadius:'50%', width:44, height:44, fontSize:22, cursor:'pointer' }}>
           {user.avatar}
         </button>
       </div>
 
       {/* 캘린더 */}
-      <div style={{ margin:'16px 20px', background:'rgba(0,0,0,0.3)', borderRadius:20,
-        padding:'16px', border:`1.5px solid rgba(255,255,255,0.2)`,
-        backdropFilter:'blur(10px)' }}>
+      <div style={{ margin:'16px 20px', ...glassStyle, borderRadius:20, padding:'16px' }}>
         <div style={{ display:'flex', alignItems:'center',
           justifyContent:'space-between', marginBottom:12 }}>
           <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} style={{
             background:'none', border:'none', color:'#fff', fontSize:20, cursor:'pointer' }}>‹</button>
-          <span style={{ color:'#fff', fontWeight:700, fontSize:16 }}>
+          <span style={{ color:'#fff', fontWeight:700, fontSize:16,
+            textShadow:'0 1px 4px rgba(0,0,0,0.3)' }}>
             {year}년 {month + 1}월
           </span>
           <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} style={{
@@ -91,7 +100,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
         <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', marginBottom:4 }}>
           {['일','월','화','수','목','금','토'].map((d, i) => (
             <div key={d} style={{ textAlign:'center',
-              color: i===0?'#f87171': i===6?'#7c6af7':colors.textMuted,
+              color: i===0?'#f87171': i===6?'#a78bfa':'rgba(255,255,255,0.8)',
               fontSize:11, fontWeight:600, padding:'4px 0' }}>{d}</div>
           ))}
         </div>
@@ -109,18 +118,19 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
               <button key={dateKey} onClick={() => !isFutureDate && setSelectedDay(dateKey)}
                 style={{
                   padding:'6px 2px', borderRadius:8, border:'none',
-                  background: isSelected ? colors.accent : 'transparent',
+                  background: isSelected ? 'rgba(124,106,247,0.8)' : 'transparent',
                   cursor: isFutureDate ? 'default' : 'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   opacity: isFutureDate ? 0.3 : 1,
                 }}>
                 <span style={{
-                  color: isSelected ? '#fff' : isTodayDate ? colors.accent : '#fff',
+                  color: isSelected ? '#fff' : isTodayDate ? '#7c6af7' : '#fff',
                   fontSize:13, fontWeight: isSelected || isTodayDate ? 700 : 400,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.3)',
                 }}>{day}</span>
                 {hasCert && (
                   <div style={{ width:4, height:4, borderRadius:'50%',
-                    background: isSelected ? '#fff' : colors.accentLight }} />
+                    background: isSelected ? '#fff' : '#a78bfa' }} />
                 )}
               </button>
             );
@@ -130,8 +140,9 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
 
       {/* 선택한 날짜 섹션 */}
       <div style={{ padding:'0 20px' }}>
-        <p style={{ color:colors.textMuted, fontSize:12, fontWeight:600,
-          marginBottom:10, textTransform:'uppercase', letterSpacing:1 }}>
+        <p style={{ color:'#fff', fontSize:12, fontWeight:600,
+          marginBottom:10, textTransform:'uppercase', letterSpacing:1,
+          textShadow:'0 1px 4px rgba(0,0,0,0.5)' }}>
           {isToday ? '오늘' : selectedDay}
         </p>
 
@@ -147,50 +158,51 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
 
         {isPast && selectedPosts.length === 0 && (
           <div style={{ textAlign:'center', padding:'24px 0', marginBottom:16,
-            background:colors.card, borderRadius:16, border:`1.5px solid ${colors.border}` }}>
+            ...glassStyle, borderRadius:16 }}>
             <div style={{ fontSize:36 }}>📭</div>
-            <p style={{ color:'#444', fontSize:13, marginTop:8 }}>이날은 인증 기록이 없어요</p>
+            <p style={{ color:'#fff', fontSize:13, marginTop:8 }}>이날은 인증 기록이 없어요</p>
           </div>
         )}
 
-        {/* 투두리스트 */}
+        {/* To Do List */}
         {!isFuture && (
-          <div style={{ background:colors.card, borderRadius:20,
-            border:`1.5px solid ${colors.border}`, overflow:'hidden', marginBottom:16 }}>
-            <div style={{ padding:'14px 16px', borderBottom:`1px solid ${colors.border}` }}>
+          <div style={{ ...glassStyle, borderRadius:20, overflow:'hidden', marginBottom:16 }}>
+            <div style={{ padding:'14px 16px', borderBottom:'1px solid rgba(255,255,255,0.2)' }}>
               <p style={{ color:'#fff', fontWeight:700, fontSize:15, margin:0 }}>
-                ✅ 투두리스트
+                To Do List
               </p>
             </div>
 
             {loadingTodos ? (
-              <div style={{ padding:20, textAlign:'center',
-                color:colors.textMuted, fontSize:13 }}>로딩 중...</div>
+              <div style={{ padding:20, textAlign:'center', color:'rgba(255,255,255,0.7)', fontSize:13 }}>
+                로딩 중...
+              </div>
             ) : (
               <>
                 {todos.length === 0 && (
                   <div style={{ padding:'16px', textAlign:'center' }}>
-                    <p style={{ color:'#444', fontSize:13 }}>할 일을 추가해보세요!</p>
+                    <p style={{ color:'rgba(255,255,255,0.6)', fontSize:13 }}>할 일을 추가해보세요!</p>
                   </div>
                 )}
                 {todos.map(todo => (
                   <div key={todo.id} style={{ display:'flex', alignItems:'center',
                     gap:12, padding:'12px 16px',
-                    borderBottom:`1px solid ${colors.border}` }}>
+                    borderBottom:'1px solid rgba(255,255,255,0.15)' }}>
                     <button onClick={() => handleToggleTodo(todo.id, todo.done)} style={{
                       width:22, height:22, borderRadius:'50%',
-                      border:`2px solid ${todo.done ? colors.accent : colors.border}`,
-                      background: todo.done ? colors.accent : 'transparent',
+                      border:`2px solid ${todo.done ? '#7c6af7' : 'rgba(255,255,255,0.5)'}`,
+                      background: todo.done ? '#7c6af7' : 'transparent',
                       cursor:'pointer', flexShrink:0,
                       display:'flex', alignItems:'center', justifyContent:'center' }}>
                       {todo.done && <span style={{ color:'#fff', fontSize:12 }}>✓</span>}
                     </button>
-                    <span style={{ flex:1, color: todo.done ? colors.textMuted : '#fff',
+                    <span style={{ flex:1,
+                      color: todo.done ? 'rgba(255,255,255,0.4)' : '#fff',
                       fontSize:14, textDecoration: todo.done ? 'line-through' : 'none' }}>
                       {todo.text}
                     </span>
                     <button onClick={() => handleDeleteTodo(todo.id)} style={{
-                      background:'none', border:'none', color:'#444',
+                      background:'none', border:'none', color:'rgba(255,255,255,0.4)',
                       fontSize:16, cursor:'pointer', padding:0 }}>✕</button>
                   </div>
                 ))}
@@ -199,11 +211,11 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
                   <input value={newTodo} onChange={e => setNewTodo(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddTodo()}
                     placeholder="할 일 추가..."
-                    style={{ flex:1, background:colors.bg, border:`1.5px solid ${colors.border}`,
+                    style={{ flex:1, background:'rgba(255,255,255,0.2)', border:'1.5px solid rgba(255,255,255,0.3)',
                       borderRadius:10, padding:'10px 12px', color:'#fff', fontSize:14,
                       outline:'none' }} />
                   <button onClick={handleAddTodo} style={{
-                    background:colors.accent, border:'none', borderRadius:10,
+                    background:'rgba(124,106,247,0.8)', border:'none', borderRadius:10,
                     padding:'10px 16px', color:'#fff', fontWeight:700,
                     fontSize:14, cursor:'pointer' }}>+</button>
                 </div>
@@ -213,7 +225,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
         )}
       </div>
 
-      {/* FAB - 미래 날짜 제외하고 모두 사진 올리기 가능 */}
+      {/* FAB */}
       {!isFuture && (
         <button onClick={() => onOpenCamera(selectedDay)} style={{
           position:'fixed', bottom:90, right:24, width:60, height:60,
