@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-export default function CameraScreen({ user, onSubmit, onBack }) {
+export default function CameraScreen({ user, date, onSubmit, onBack }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -57,7 +57,7 @@ export default function CameraScreen({ user, onSubmit, onBack }) {
   async function handleSubmit() {
     setLoading(true);
     try {
-      await onSubmit({ imageBase64: captured, caption });
+      await onSubmit({ imageBase64: captured, caption, date });
     } catch { alert('업로드 실패. 다시 시도해주세요.'); }
     finally { setLoading(false); }
   }
@@ -72,7 +72,7 @@ export default function CameraScreen({ user, onSubmit, onBack }) {
           background:'rgba(0,0,0,.6)', border:'none', color:'#fff',
           borderRadius:'50%', width:40, height:40, fontSize:20, cursor:'pointer' }}>←</button>
         <span style={{ color:'#fff', fontWeight:700, fontSize:16, marginLeft:12 }}>
-          오늘의 공부 인증
+          {date} 공부 인증
         </span>
       </div>
 

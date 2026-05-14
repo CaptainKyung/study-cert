@@ -42,7 +42,6 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
     setTodos(prev => prev.filter(t => t.id !== todoId));
   }
 
-  // 캘린더 계산
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -77,8 +76,6 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
       {/* 캘린더 */}
       <div style={{ margin:'16px 20px', background:colors.card, borderRadius:20,
         padding:'16px', border:`1.5px solid ${colors.border}` }}>
-
-        {/* 월 이동 */}
         <div style={{ display:'flex', alignItems:'center',
           justifyContent:'space-between', marginBottom:12 }}>
           <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} style={{
@@ -90,7 +87,6 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
             background:'none', border:'none', color:'#fff', fontSize:20, cursor:'pointer' }}>›</button>
         </div>
 
-        {/* 요일 헤더 */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', marginBottom:4 }}>
           {['일','월','화','수','목','금','토'].map((d, i) => (
             <div key={d} style={{ textAlign:'center',
@@ -99,7 +95,6 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
           ))}
         </div>
 
-        {/* 날짜 */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
           {calDays.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} />;
@@ -144,7 +139,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
           <div style={{ marginBottom:16 }}>
             {selectedPosts.map(post => (
               <PostCard key={post.id} post={post} currentUserId={user.id}
-  currentUser={user} onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
+                currentUser={user} onLike={onLike} onDelete={onDelete} onEdit={onEdit} />
             ))}
           </div>
         )}
@@ -163,7 +158,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
             border:`1.5px solid ${colors.border}`, overflow:'hidden', marginBottom:16 }}>
             <div style={{ padding:'14px 16px', borderBottom:`1px solid ${colors.border}` }}>
               <p style={{ color:'#fff', fontWeight:700, fontSize:15, margin:0 }}>
-                To do list
+                ✅ 투두리스트
               </p>
             </div>
 
@@ -199,7 +194,6 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
                   </div>
                 ))}
 
-                {/* 투두 추가 - 오늘과 과거 모두 가능 */}
                 <div style={{ display:'flex', gap:8, padding:'12px 16px' }}>
                   <input value={newTodo} onChange={e => setNewTodo(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddTodo()}
@@ -218,9 +212,9 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
         )}
       </div>
 
-      {/* FAB - 사진 올리기 (오늘만) */}
-      {isToday && (
-        <button onClick={onOpenCamera} style={{
+      {/* FAB - 미래 날짜 제외하고 모두 사진 올리기 가능 */}
+      {!isFuture && (
+        <button onClick={() => onOpenCamera(selectedDay)} style={{
           position:'fixed', bottom:90, right:24, width:60, height:60,
           borderRadius:'50%', background:'linear-gradient(135deg,#7c6af7,#a78bfa)',
           border:'none', cursor:'pointer', fontSize:26,

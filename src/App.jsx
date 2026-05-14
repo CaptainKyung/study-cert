@@ -18,6 +18,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
+  const [cameraDate, setCameraDate] = useState(null);
 
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
@@ -77,10 +78,11 @@ export default function App() {
 
   const today = formatDate();
 
-  async function handleSubmit({ imageBase64, caption }) {
+  async function handleSubmit({ imageBase64, caption, date }) {
     await createPost({
       userId: user.id, userName: user.name,
-      userAvatar: user.avatar, imageBase64, caption, date: today,
+      userAvatar: user.avatar, imageBase64, caption,
+      date: date || today,
     });
     await loadPosts();
     setScreen('feed');
@@ -112,7 +114,7 @@ export default function App() {
   if (!user) return <AuthScreen onComplete={handleAuthComplete} />;
 
   if (screen === 'camera') return (
-    <CameraScreen user={user}
+    <CameraScreen user={user} date={cameraDate}
       onSubmit={handleSubmit} onBack={() => setScreen('feed')} />
   );
 
@@ -121,7 +123,8 @@ export default function App() {
       {tab === 'feed' && (
         <FeedScreen user={user} posts={posts} onRefresh={loadPosts}
           onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit}
-          onOpenCamera={() => setScreen('camera')} onLogout={handleLogout} />
+          onOpenCamera={(date) => { setCameraDate(date); setScreen('camera'); }}
+          onLogout={handleLogout} />
       )}
       {tab === 'group' && (
         <GroupScreen user={user} posts={posts}
