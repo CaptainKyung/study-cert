@@ -118,13 +118,13 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
               <button key={dateKey} onClick={() => !isFutureDate && setSelectedDay(dateKey)}
                 style={{
                   padding:'6px 2px', borderRadius:8, border:'none',
-                  background: isSelected ? 'rgba(124,106,247,0.8)' : 'transparent',
+                  background: isSelected ? 'rgba(123,198,126,0.8)' : 'transparent',
                   cursor: isFutureDate ? 'default' : 'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   opacity: isFutureDate ? 0.3 : 1,
                 }}>
                 <span style={{
-                  color: isSelected ? '#fff' : isTodayDate ? '#7c6af7' : '#fff',
+                  color: isSelected ? '#fff' : isTodayDate ? '#7bc67e' : '#fff',
                   fontSize:13, fontWeight: isSelected || isTodayDate ? 700 : 400,
                   textShadow: '0 1px 3px rgba(0,0,0,0.3)',
                 }}>{day}</span>
@@ -215,7 +215,7 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
                       borderRadius:10, padding:'10px 12px', color:'#fff', fontSize:14,
                       outline:'none' }} />
                   <button onClick={handleAddTodo} style={{
-                    background:'rgba(124,106,247,0.8)', border:'none', borderRadius:10,
+                    background:'rgba(123,198,126,0.8)', border:'none', borderRadius:10,
                     padding:'10px 16px', color:'#fff', fontWeight:700,
                     fontSize:14, cursor:'pointer' }}>+</button>
                 </div>
@@ -229,9 +229,9 @@ export default function FeedScreen({ user, posts, onRefresh, onLike, onDelete, o
       {!isFuture && (
         <button onClick={() => onOpenCamera(selectedDay)} style={{
           position:'fixed', bottom:90, right:24, width:60, height:60,
-          borderRadius:'50%', background:'linear-gradient(135deg,#7c6af7,#a78bfa)',
+          borderRadius:'50%', background:'linear-gradient(135deg,#7bc67e,#a8d9a8)',
           border:'none', cursor:'pointer', fontSize:26,
-          boxShadow:'0 8px 24px rgba(124,106,247,.4)', zIndex:50 }}>
+          boxShadow:'0 8px 24px rgba(123,198,126,.4)', zIndex:50 }}>
           📸
         </button>
       )}
